@@ -1,0 +1,38 @@
+{
+  "name": "cicd-health-dashboard-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for CI/CD Pipeline Health Dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "build": "echo 'No build step required for EJS'",
+    "test": "echo 'No tests specified'"
+  },
+  "keywords": [
+    "cicd",
+    "jenkins",
+    "dashboard",
+    "monitoring",
+    "pipeline"
+  ],
+  "author": "CI/CD Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ejs": "^3.1.9",
+    "socket.io-client": "^4.7.2",
+    "axios": "^1.5.0",
+    "moment": "^2.29.4",
+    "chart.js": "^4.4.0",
+    "bootstrap": "^5.3.2",
+    "jquery": "^3.7.1",
+    "popper.js": "^1.16.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

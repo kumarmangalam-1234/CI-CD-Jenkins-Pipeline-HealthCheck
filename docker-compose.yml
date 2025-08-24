@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: cicd-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: cicd-dashboard
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - cicd-network
+
+  # Python Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cicd-backend
+    restart: unless-stopped
+    environment:
+      - FLASK_ENV=production
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/cicd-dashboard?authSource=admin
+      - JENKINS_URL=http://host.docker.internal:4000
+      - JENKINS_USERNAME=admin
+      - JENKINS_API_TOKEN=11dd97375afdede7066f2d8088fb715a15
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USERNAME=kumarmanglammishra@gmail.com
+      - SMTP_PASSWORD=bsekbmlkhkrgbjnj
+    ports:
+      - "5001:5000"
+    depends_on:
+      - mongodb
+    networks:
+      - cicd-network
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+      - ./database:/app/database
+
+  # Node.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cicd-frontend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - BACKEND_URL=http://backend:5000
+      - PUBLIC_BACKEND_URL=http://localhost:5001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - cicd-network
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+  # Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    container_name: cicd-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - cicd-network
+
+  # Nginx reverse proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: cicd-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - cicd-network
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  cicd-network:
+    driver: bridge

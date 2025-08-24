@@ -1,0 +1,16 @@
+Flask==2.3.3
+Flask-SocketIO==5.3.6
+Flask-CORS==4.0.0
+pymongo==4.5.0
+python-dotenv==1.0.0
+requests==2.31.0
+schedule==1.2.0
+slack-sdk==3.21.3
+flask-mail==0.9.1
+redis==5.0.1
+celery==5.3.4
+prometheus-client==0.17.1
+structlog==23.1.0
+gunicorn==21.2.0
+python-jenkins==1.8.0
+eventlet==0.36.1

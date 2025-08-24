@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>CI/CD Pipeline Health Dashboard</title>
+        <!-- Bootstrap CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        <!-- Font Awesome -->
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+        <!-- Custom CSS -->
+        <link href="/css/dashboard.css" rel="stylesheet">
+        <script>
+            window.BACKEND_URL = '<%= backendUrl %>';
+        </script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-tachometer-alt me-2"></i>
+                CI/CD Health Dashboard
+            </a>
+            <div class="navbar-nav ms-auto align-items-center">
+                <span class="navbar-text me-3">
+                    <i class="fas fa-circle text-success me-1"></i>
+                    <span id="connection-status">Connected</span>
+                </span>
+                <button class="btn btn-outline-light btn-sm me-3" onclick="window.dashboardManager && window.dashboardManager.refreshData && window.dashboardManager.refreshData();">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <div class="nav-item position-relative">
+                    <button id="failed-builds-alert" class="btn btn-outline-danger position-relative" onclick="window.dashboardManager && window.dashboardManager.showFailedBuilds()">
+                        <i class="fas fa-bell"></i>
+                        <span id="failed-builds-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none;">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid mt-4">
+        <!-- Alert for errors -->
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <%= error %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
+
+        <!-- Overview Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title" id="total-pipelines">-</h4>
+                                <p class="card-text">Total Pipelines</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-project-diagram fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title" id="success-rate">-</h4>
+                                <p class="card-text">Success Rate</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-check-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title" id="avg-build-time">-</h4>
+                                <p class="card-text">Avg Build Time</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-clock fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title" id="total-builds">-</h4>
+                                <p class="card-text">Total Builds</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-cogs fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-pie me-2"></i>
+                            Build Status Distribution
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="statusChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Build Duration Trend
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="durationChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs: Pipelines / Steps & Resolutions / Email -->
+        <ul class="nav nav-tabs mb-3" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="pipelines-tab" data-bs-toggle="tab" data-bs-target="#pipelines" type="button" role="tab">Pipelines</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="resolutions-tab" data-bs-toggle="tab" data-bs-target="#resolutions" type="button" role="tab">Steps & Resolutions</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="email-tab" data-bs-toggle="tab" data-bs-target="#email" type="button" role="tab">Email</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="mainTabsContent">
+            <div class="tab-pane fade show active" id="pipelines" role="tabpanel">
+                <!-- Pipelines Table -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list me-2"></i>
+                            Pipeline Status
+                        </h5>
+                        <div class="row g-2 align-items-center">
+                            <div class="col-auto">
+                                <input type="text" class="form-control form-control-sm" id="filter-name" placeholder="Job Name">
+                            </div>
+                            <div class="col-auto">
+                                <input type="text" class="form-control form-control-sm" id="filter-user" placeholder="Triggered User">
+                            </div>
+                            <div class="col-auto">
+                                <select class="form-select form-select-sm" id="filter-status">
+                                    <option value="">Status</option>
+                                    <option value="SUCCESS">Success</option>
+                                    <option value="FAILURE">Failure</option>
+                                    <option value="IN_PROGRESS">In Progress</option>
+                                    <option value="UNKNOWN">Unknown</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <input type="number" class="form-control form-control-sm" id="filter-build-time" placeholder="Min Build Time (s)">
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-outline-primary btn-sm" id="apply-filters"><i class="fas fa-filter"></i> Filter</button>
+                                <button class="btn btn-outline-secondary btn-sm" id="clear-filters"><i class="fas fa-times"></i> Clear</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="pipelines-table">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Pipeline Name</th>
+                                        <th>Status</th>
+                                        <th>Last Build</th>
+                                        <th>Build Time</th>
+                                        <th>Triggered By</th>
+                                        <th>Success Rate</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pipelines-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="resolutions" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0"><i class="fas fa-wrench me-2"></i>Build Time Improvements & Remedies</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Pipeline (optional)</label>
+                            <input type="text" class="form-control" id="advice-pipeline" placeholder="Leave blank for overall">
+                        </div>
+                        <button class="btn btn-primary" onclick="loadAdvice()"><i class="fas fa-lightbulb"></i> Get Advice</button>
+                        <hr>
+                        <div id="advice-content">
+                            <h6>Recommended Steps</h6>
+                            <ul id="advice-list"></ul>
+                            <h6 class="mt-3">Recent Failures</h6>
+                            <ul id="failures-list"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="email" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0"><i class="fas fa-envelope me-2"></i>Email Advice</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Recipients (comma-separated)</label>
+                                <input type="text" class="form-control" id="email-recipients" placeholder="team@example.com,owner@example.com">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Pipeline (optional)</label>
+                                <input type="text" class="form-control" id="email-pipeline" placeholder="Specific pipeline name or leave blank">
+                            </div>
+                        </div>
+                        <button class="btn btn-success mt-3" onclick="sendAdviceEmail()"><i class="fas fa-paper-plane"></i> Send Email</button>
+                        <div id="email-status" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <!-- Removed duplicate Pipeline Status table -->
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mb-0">Loading pipeline data...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <script src="/js/dashboard.js"></script>
+    
+    <script>
+        // Initialize dashboard with data from server
+        const initialData = {
+            pipelines: <%- JSON.stringify(pipelines) %>,
+            overallMetrics: <%- JSON.stringify(overallMetrics) %>,
+            backendUrl: '<%= backendUrl %>'
+        };
+        
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard(initialData);
+        });
+    </script>
+</body>
+</html>
