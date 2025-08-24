@@ -4,75 +4,6 @@
  */
 
 class DashboardManager {
-    async fetchJenkinsNodes() {
-        try {
-            const res = await fetch(`${this.backendUrl}/api/jenkins-nodes`);
-            if (res.ok) {
-                const nodes = await res.json();
-                this.renderJenkinsNodes(nodes);
-            }
-        } catch (e) {
-            console.error('Failed to fetch Jenkins nodes:', e);
-        }
-    }
-
-    renderJenkinsNodes(nodes) {
-        const listDiv = document.getElementById('jenkins-nodes-list');
-        if (!listDiv) return;
-        if (!nodes.length) {
-            listDiv.innerHTML = '<span class="text-muted">No Jenkins nodes added yet.</span>';
-            return;
-        }
-        let html = '<ul class="list-group">';
-        nodes.forEach(node => {
-            html += `<li class="list-group-item d-flex justify-content-between align-items-center">
-                <span><strong>${node.jenkins_url}</strong> (Port: ${node.port})</span>
-                <span>
-                    <span class="badge ${node.connection_status === 'up' ? 'bg-success' : 'bg-danger'} me-2">${node.connection_status === 'up' ? 'Up' : 'Down'}</span>
-                    <span class="badge ${node.health === 'Healthy' ? 'bg-success' : 'bg-danger'} me-2">${node.health}</span>
-                    <span class="badge bg-primary">Jobs: ${node.num_jobs}</span>
-                </span>
-            </li>`;
-        });
-        html += '</ul>';
-        listDiv.innerHTML = html;
-    }
-
-    async addJenkinsNode(url, port) {
-        try {
-            const res = await fetch(`${this.backendUrl}/api/jenkins-nodes`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url, port })
-            });
-            if (res.ok) {
-                await this.fetchJenkinsNodes();
-            } else {
-                const err = await res.json();
-                alert('Failed to add node: ' + (err.error || 'Unknown error'));
-            }
-        } catch (e) {
-            alert('Error adding Jenkins node: ' + e.message);
-        }
-    }
-
-    setupJenkinsNodeIntegration() {
-        const form = document.getElementById('add-node-form');
-        if (form) {
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const url = document.getElementById('jenkins-node-url').value.trim();
-                const port = document.getElementById('jenkins-node-port').value.trim();
-                if (!url || !port) {
-                    alert('Please enter both URL and port.');
-                    return;
-                }
-                await this.addJenkinsNode(url, port);
-                form.reset();
-            });
-        }
-        this.fetchJenkinsNodes();
-    }
     applyFilters() {
         const name = document.getElementById('filter-name').value.trim().toLowerCase();
         const user = document.getElementById('filter-user').value.trim().toLowerCase();
@@ -209,11 +140,9 @@ class DashboardManager {
         this.setupWebSocket();
         // Auto-refresh every 30 seconds, but do not block UI
         this.startAutoRefresh();
-        // Setup filter buttons
-        document.getElementById('apply-filters').addEventListener('click', () => this.applyFilters());
-        document.getElementById('clear-filters').addEventListener('click', () => this.clearFilters());
-        // Setup Jenkins node integration
-        this.setupJenkinsNodeIntegration();
+    // Setup filter buttons
+    document.getElementById('apply-filters').addEventListener('click', () => this.applyFilters());
+    document.getElementById('clear-filters').addEventListener('click', () => this.clearFilters());
     }
     
     setupEventListeners() {
