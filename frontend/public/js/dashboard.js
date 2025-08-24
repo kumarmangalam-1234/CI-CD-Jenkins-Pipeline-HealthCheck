@@ -491,13 +491,19 @@ class DashboardManager {
             <td>${buildTime}</td>
             <td>${triggeredBy}</td>
             <td>
-                <div class="progress" style="height: 20px;">
-                    <div class="progress-bar bg-success" style="width: ${successRate}%">
-                        Success: ${successRate.toFixed(1)}%
+                <div style="display: flex; gap: 4px; align-items: center;">
+                    <div class="progress" style="height: 10px; width: 60px; background-color: #e9ecef;">
+                        <div class="progress-bar bg-success" style="width: ${successRate}%; height: 10px;"></div>
                     </div>
-                    <div class="progress-bar bg-danger" style="width: ${failureRate}%">
-                        Failure: ${failureRate.toFixed(1)}%
+                    <span class="text-success" style="font-size: 0.85em;">${successRate.toFixed(1)}%</span>
+                </div>
+            </td>
+            <td>
+                <div style="display: flex; gap: 4px; align-items: center;">
+                    <div class="progress" style="height: 10px; width: 60px; background-color: #e9ecef;">
+                        <div class="progress-bar bg-danger" style="width: ${failureRate}%; height: 10px;"></div>
                     </div>
+                    <span class="text-danger" style="font-size: 0.85em;">${failureRate.toFixed(1)}%</span>
                 </div>
             </td>
             <td>

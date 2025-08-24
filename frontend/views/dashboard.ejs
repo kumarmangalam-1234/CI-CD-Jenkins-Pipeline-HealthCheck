@@ -169,10 +169,32 @@
                         </h5>
                         <div class="row g-2 align-items-center">
                             <div class="col-auto">
-                                <input type="text" class="form-control form-control-sm" id="filter-name" placeholder="Job Name">
+                                <select class="form-select form-select-sm" id="filter-name">
+                                    <option value="">Job Name</option>
+                                    <% pipelines.forEach(function(p) { %>
+                                        <option value="<%= p.name %>"><%= p.name %></option>
+                                    <% }) %>
+                                </select>
                             </div>
                             <div class="col-auto">
-                                <input type="text" class="form-control form-control-sm" id="filter-user" placeholder="Triggered User">
+                                <select class="form-select form-select-sm" id="filter-user">
+                                    <option value="">Triggered User</option>
+                                    <option value="admin" selected>admin</option>
+                                    <% 
+                                    const users = [];
+                                    pipelines.forEach(function(p) {
+                                        if (p.info && p.info.builds) {
+                                            p.info.builds.forEach(function(b) {
+                                                if (b.user && !users.includes(b.user) && b.user !== 'admin') {
+                                                    users.push(b.user);
+                                                }
+                                            });
+                                        }
+                                    });
+                                    users.forEach(function(u) { %>
+                                        <option value="<%= u %>"><%= u %></option>
+                                    <% }); %>
+                                </select>
                             </div>
                             <div class="col-auto">
                                 <select class="form-select form-select-sm" id="filter-status">
@@ -203,6 +225,7 @@
                                         <th>Build Time</th>
                                         <th>Triggered By</th>
                                         <th>Success Rate</th>
+                                        <th>Failure Rate</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>

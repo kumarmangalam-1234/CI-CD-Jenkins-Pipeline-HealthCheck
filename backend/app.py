@@ -1,17 +1,33 @@
-@app.route('/api/failed-builds/viewed', methods=['POST'])
-def mark_failed_build_viewed():
-    """Mark a failed build as viewed and remove from notifications"""
-    try:
-        data = request.get_json(force=True)
-        pipeline_name = data.get('pipeline_name')
-        build_number = data.get('build_number')
-        if not pipeline_name or build_number is None:
-            return jsonify({'error': 'Missing pipeline_name or build_number'}), 400
-        db.failed_builds.delete_one({"pipeline_name": pipeline_name, "build_number": build_number})
-        return jsonify({'status': 'removed'}), 200
-    except Exception as e:
-        logger.error("Failed to mark failed build as viewed", error=str(e))
-        return jsonify({'error': str(e)}), 500
+#!/usr/bin/env python3
+"""
+CI/CD Pipeline Health Dashboard Backend
+Main Flask application with Jenkins integration and real-time monitoring
+"""
+
+import os
+import json
+import logging
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional
+
+from flask import Flask, request, jsonify, render_template
+from flask_socketio import SocketIO, emit
+from flask_cors import CORS
+import pymongo
+from pymongo import MongoClient
+import requests
+import schedule
+import time
+import threading
+from prometheus_client import generate_latest, Counter, Histogram, Gauge
+import structlog
+import smtplib
+from email.mime.text import MIMEText
+
+# ...existing code...
+
+# Place this route after Flask app initialization
+
 #!/usr/bin/env python3
 """
 CI/CD Pipeline Health Dashboard Backend
