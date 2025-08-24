@@ -61,8 +61,10 @@ class DashboardManager {
         try {
             const res = await fetch(`${this.backendUrl}/api/failed-builds`);
             if (res.ok) {
-                this.failedBuilds = await res.json();
-                this.updateFailedBuildsBadge();
+                let builds = await res.json();
+                // Sort by timestamp descending and take top 10
+                builds.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                this.failedBuilds = builds.slice(0, 10);
             }
         } catch (e) {
             console.error('Failed to fetch failed builds:', e);
@@ -70,9 +72,10 @@ class DashboardManager {
     }
 
     updateFailedBuildsBadge() {
-        const count = this.failedBuilds.length;
+        // Show failed builds count badge with top 10 count
         const badge = document.getElementById('failed-builds-count');
         if (badge) {
+            const count = this.failedBuilds.length;
             badge.textContent = count;
             badge.style.display = count > 0 ? 'inline-block' : 'none';
         }
@@ -87,7 +90,7 @@ class DashboardManager {
             const url = b.pipeline_name && b.build_number ? `http://localhost:4000/job/${b.pipeline_name}/${b.build_number}/console` : 'http://localhost:4000/';
             html += `<li class="list-group-item d-flex justify-content-between align-items-center">
                 <span><strong>${b.pipeline_name}</strong> #${b.build_number} <span class="badge bg-danger ms-2">${b.status}</span></span>
-                <a href="${url}" target="_blank" class="btn btn-sm btn-outline-danger" onclick="window.dashboardManager.markFailedBuildViewed('${b.pipeline_name}', ${b.build_number})">View</a>
+                <a href="${url}" target="_blank" class="btn btn-sm btn-outline-danger" data-pipeline="${b.pipeline_name}" data-build="${b.build_number}">View</a>
             </li>`;
         });
         html += '</ul></div>';
@@ -105,6 +108,15 @@ class DashboardManager {
                 dropdown.style.display = 'none';
                 document.removeEventListener('click', handler);
             }
+        });
+        // Remove build from dropdown after viewing
+        dropdown.querySelectorAll('a[data-pipeline][data-build]').forEach(link => {
+            link.addEventListener('click', async (e) => {
+                const pipeline = link.getAttribute('data-pipeline');
+                const build = link.getAttribute('data-build');
+                await this.markFailedBuildViewed(pipeline, build);
+                link.closest('li').remove();
+            });
         });
     }
 
