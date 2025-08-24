@@ -1,3 +1,28 @@
+# Test endpoint to verify email delivery
+@app.route('/api/test-email', methods=['POST'])
+def test_email():
+    try:
+        logger.info("Preparing to send test email...")
+        recipients = ["kumarmanglammishra@gmail.com"]
+        subject = "Test: Jenkins Node Email Notification"
+        body = "This is a test email from your CI/CD Jenkins Node HealthCheck system."
+        msg = MIMEText(body)
+        msg['Subject'] = subject
+        msg['From'] = SMTP_CONFIG['username']
+        msg['To'] = ', '.join(recipients)
+        logger.info(f"Connecting to SMTP server {SMTP_CONFIG['host']}:{SMTP_CONFIG['port']} as {SMTP_CONFIG['username']}")
+        with smtplib.SMTP(SMTP_CONFIG['host'], SMTP_CONFIG['port']) as server:
+            logger.info("Starting TLS...")
+            server.starttls()
+            logger.info("Logging in to SMTP...")
+            server.login(SMTP_CONFIG['username'], SMTP_CONFIG['password'])
+            logger.info("Sending email...")
+            server.sendmail(SMTP_CONFIG['username'], recipients, msg.as_string())
+        logger.info("Test email sent successfully.")
+        return jsonify({"message": "Test email sent successfully."})
+    except Exception as e:
+        logger.error("Failed to send test email", error=str(e))
+        return jsonify({"error": str(e)}), 500
 #!/usr/bin/env python3
 """
 CI/CD Pipeline Health Dashboard Backend
@@ -86,6 +111,65 @@ _bg_started = False
 MONGODB_URI = os.environ.get('MONGODB_URI', 'mongodb://localhost:27017/cicd-dashboard')
 client = MongoClient(MONGODB_URI)
 db = client.get_database()
+
+# Jenkins nodes collection
+jenkins_nodes_collection = db.jenkins_nodes
+
+# Helper to check Jenkins node health
+def get_jenkins_node_health(url, port):
+    from urllib.parse import urlparse
+    full_url = url if url.startswith('http') else f'http://{url}:{port}'
+    try:
+        response = requests.get(f"{full_url}/api/json", timeout=3)
+        status = "up" if response.status_code == 200 else "down"
+        data = response.json() if response.status_code == 200 else {}
+        num_jobs = len(data.get('jobs', [])) if data else 0
+    except Exception:
+        status = "down"
+        num_jobs = 0
+    health = "Healthy" if status == "up" else "Unhealthy"
+    # Email notification if node is down
+    if status == "down":
+        try:
+            recipients = ["kumarmanglammishra@gmail.com"]
+            subject = f"ALERT: Jenkins Node Down ({full_url}:{port})"
+            body = f"Your Jenkins node at {full_url} (port {port}) is DOWN. Please check immediately."
+            msg = MIMEText(body)
+            msg['Subject'] = subject
+            msg['From'] = SMTP_CONFIG['username']
+            msg['To'] = ', '.join(recipients)
+            with smtplib.SMTP(SMTP_CONFIG['host'], SMTP_CONFIG['port']) as server:
+                server.starttls()
+                server.login(SMTP_CONFIG['username'], SMTP_CONFIG['password'])
+                server.sendmail(SMTP_CONFIG['username'], recipients, msg.as_string())
+        except Exception as e:
+            logger.error(f"Failed to send Jenkins node down alert email", error=str(e))
+    return {
+        "jenkins_url": full_url,
+        "port": port,
+        "connection_status": status,
+        "num_jobs": num_jobs,
+        "health": health
+    }
+
+# API to add a Jenkins node
+@app.route('/api/jenkins-nodes', methods=['POST'])
+def add_jenkins_node():
+    body = request.get_json(force=True) or {}
+    url = body.get('url')
+    port = body.get('port')
+    if not url or not port:
+        return jsonify({"error": "url and port required"}), 400
+    # Store node in DB
+    jenkins_nodes_collection.update_one({"url": url, "port": port}, {"$set": {"url": url, "port": port}}, upsert=True)
+    return jsonify({"message": "Node added", "url": url, "port": port})
+
+# API to list all Jenkins nodes and their health
+@app.route('/api/jenkins-nodes', methods=['GET'])
+def list_jenkins_nodes():
+    nodes = list(jenkins_nodes_collection.find({}, {"_id": 0}))
+    health_list = [get_jenkins_node_health(n['url'], n['port']) for n in nodes]
+    return jsonify(health_list)
 
 # Jenkins configuration
 JENKINS_URL = os.environ.get('JENKINS_URL', 'https://jenkins.example.com')
@@ -759,6 +843,40 @@ def handle_pipeline_subscription(data):
     logger.info(f"Client subscribed to pipeline: {pipeline_name}")
 
 # Error handlers
+@app.errorhandler(404)
+
+# Jenkins Node Health API
+@app.route('/api/jenkins-node-health')
+def jenkins_node_health():
+    """Return Jenkins node health status, number of jobs, port, and connection status."""
+    try:
+        # Check Jenkins connection
+        try:
+            response = jenkins_monitor.session.get(f"{JENKINS_URL}/api/json", timeout=3)
+            status = "up" if response.status_code == 200 else "down"
+            data = response.json() if response.status_code == 200 else {}
+        except Exception:
+            status = "down"
+            data = {}
+
+        # Number of jobs
+        num_jobs = len(data.get('jobs', [])) if data else 0
+
+        # Extract Jenkins port from URL
+        from urllib.parse import urlparse
+        parsed_url = urlparse(JENKINS_URL)
+        port = parsed_url.port if parsed_url.port else (443 if parsed_url.scheme == 'https' else 80)
+
+        return jsonify({
+            "jenkins_url": JENKINS_URL,
+            "port": port,
+            "connection_status": status,
+            "num_jobs": num_jobs
+        })
+    except Exception as e:
+        logger.error("Failed to get Jenkins node health", error=str(e))
+        return jsonify({"error": str(e)}), 500
+
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({"error": "Resource not found"}), 404

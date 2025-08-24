@@ -115,6 +115,69 @@
             </div>
         </div>
 
+        <!-- Jenkins Node Health Card -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white">
+                        <i class="fas fa-server me-2"></i> Jenkins Node Health
+                    </div>
+                    <div class="card-body">
+                        <% if (jenkinsNodeHealth) { %>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <strong>Status:</strong>
+                                    <% if (jenkinsNodeHealth.connection_status === 'up') { %>
+                                        <span class="badge bg-success">Up & Running</span>
+                                    <% } else { %>
+                                        <span class="badge bg-danger">Down</span>
+                                    <% } %>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>Jobs:</strong>
+                                    <span class="badge bg-primary"><%= jenkinsNodeHealth.num_jobs %></span>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>Port:</strong>
+                                    <span class="badge bg-secondary"><%= jenkinsNodeHealth.port %></span>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <strong>Jenkins URL:</strong>
+                                <a href="<%= jenkinsNodeHealth.jenkins_url %>" target="_blank"><%= jenkinsNodeHealth.jenkins_url %></a>
+                            </div>
+                        <% } else { %>
+                            <span class="text-danger">Unable to fetch Jenkins node health.</span>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+            <!-- Jenkins Node Integration Card -->
+            <div class="col-md-6">
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <i class="fas fa-plus-circle me-2"></i> Jenkins Node Integration
+                    </div>
+                    <div class="card-body">
+                        <form id="add-node-form" class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <input type="text" class="form-control" id="jenkins-node-url" placeholder="Jenkins Node URL" required>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="number" class="form-control" id="jenkins-node-port" placeholder="Port" required>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100">Add</button>
+                            </div>
+                        </form>
+                        <div id="jenkins-nodes-list">
+                            <!-- Node health will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Charts Row -->
         <div class="row mb-4">
             <div class="col-md-6">

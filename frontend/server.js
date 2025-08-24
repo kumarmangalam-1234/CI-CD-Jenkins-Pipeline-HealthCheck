@@ -31,17 +31,20 @@ app.get('/health', (req, res) => {
 app.get('/', async (req, res) => {
     try {
         // Fetch initial data from backend
-        const [pipelinesResponse, overallMetricsResponse] = await Promise.allSettled([
+        const [pipelinesResponse, overallMetricsResponse, jenkinsNodeHealthResponse] = await Promise.allSettled([
             axios.get(`${BACKEND_URL}/api/pipelines`),
-            axios.get(`${BACKEND_URL}/api/metrics/overall`)
+            axios.get(`${BACKEND_URL}/api/metrics/overall`),
+            axios.get(`${BACKEND_URL}/api/jenkins-node-health`)
         ]);
 
         const pipelines = pipelinesResponse.status === 'fulfilled' ? pipelinesResponse.value.data : [];
         const overallMetrics = overallMetricsResponse.status === 'fulfilled' ? overallMetricsResponse.value.data : {};
+        const jenkinsNodeHealth = jenkinsNodeHealthResponse.status === 'fulfilled' ? jenkinsNodeHealthResponse.value.data : null;
 
         res.render('dashboard', {
             pipelines,
             overallMetrics,
+            jenkinsNodeHealth,
             backendUrl: PUBLIC_BACKEND_URL
         });
     } catch (error) {
@@ -49,6 +52,7 @@ app.get('/', async (req, res) => {
         res.render('dashboard', {
             pipelines: [],
             overallMetrics: {},
+            jenkinsNodeHealth: null,
             backendUrl: PUBLIC_BACKEND_URL,
             error: 'Failed to load dashboard data'
         });
