@@ -773,6 +773,10 @@ def handle_pipeline_subscription(data):
 @app.route('/api/jenkins-node-health')
 def jenkins_node_health():
     """Return Jenkins node health status, number of jobs, port, and connection status."""
+    # Always return node health details, even if Jenkins is down
+    from urllib.parse import urlparse
+    parsed_url = urlparse(JENKINS_URL)
+    port = parsed_url.port if parsed_url.port else (443 if parsed_url.scheme == 'https' else 80)
     try:
         # Check Jenkins connection
         try:
@@ -783,15 +787,34 @@ def jenkins_node_health():
             status = "down"
             data = {}
 
-        # Number of jobs
-        num_jobs = len(data.get('jobs', [])) if data else 0
-
-        # Extract Jenkins port from URL
-        from urllib.parse import urlparse
-        parsed_url = urlparse(JENKINS_URL)
-        port = parsed_url.port if parsed_url.port else (443 if parsed_url.scheme == 'https' else 80)
-
         job_names = [job.get('name') for job in data.get('jobs', [])] if data else []
+        num_jobs = len(job_names)
+
+        # Send email if node is down
+        if status == "down":
+            subject = "[ALERT] Jenkins Node Down - Immediate Attention Required"
+            body = (
+                f"Dear Team,\n\n"
+                f"This is an automated notification from the CI/CD Jenkins Health Dashboard.\n\n"
+                f"Jenkins node is currently DOWN and unreachable.\n\n"
+                f"Node Details:\n"
+                f"- Jenkins URL: {JENKINS_URL}\n"
+                f"- Port: {port}\n"
+                f"- Checked at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                f"Impact:\n"
+                f"- All Jenkins jobs and pipelines are currently inaccessible.\n"
+                f"- Automated builds, deployments, and monitoring are affected.\n\n"
+                f"Recent Jobs (last known):\n- " + "\n- ".join(job_names if job_names else ["No jobs found"]) + "\n\n"
+                f"Recommended Actions:\n"
+                f"- Please check the Jenkins server status and network connectivity.\n"
+                f"- Review server logs for errors.\n"
+                f"- Restart Jenkins service if required.\n\n"
+                f"If you need assistance, please contact your DevOps team.\n\n"
+                f"Regards,\nCI/CD Jenkins Health Dashboard"
+            )
+            recipients = ["kumarmanglammishra@gmail.com"]
+            send_email(recipients, subject, body)
+
         return jsonify({
             "jenkins_url": JENKINS_URL,
             "port": port,
@@ -801,7 +824,14 @@ def jenkins_node_health():
         })
     except Exception as e:
         logger.error("Failed to get Jenkins node health", error=str(e))
-        return jsonify({"error": str(e)}), 500
+        # Return node details with status down and empty jobs
+        return jsonify({
+            "jenkins_url": JENKINS_URL,
+            "port": port,
+            "connection_status": "down",
+            "num_jobs": 0,
+            "jenkins_jobs": []
+        })
 
 @app.errorhandler(404)
 def not_found(error):
