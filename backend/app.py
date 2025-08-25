@@ -554,13 +554,21 @@ def health_check():
         except Exception:
             jenkins_status = "disconnected"
 
+        # Fetch job names from MongoDB pipelines collection
+        job_names = []
+        try:
+            job_names = [p["name"] for p in db.pipelines.find({}, {"name": 1, "_id": 0})]
+        except Exception as e:
+            logger.error("Failed to fetch job names for health endpoint", error=str(e))
+
         return jsonify({
             "status": "healthy",
             "timestamp": datetime.now().isoformat(),
             "services": {
                 "mongodb": "connected",
                 "jenkins": jenkins_status
-            }
+            },
+            "jenkins_jobs": job_names
         }), 200
     except Exception as e:
         logger.error("Health check failed", error=str(e))
@@ -783,11 +791,13 @@ def jenkins_node_health():
         parsed_url = urlparse(JENKINS_URL)
         port = parsed_url.port if parsed_url.port else (443 if parsed_url.scheme == 'https' else 80)
 
+        job_names = [job.get('name') for job in data.get('jobs', [])] if data else []
         return jsonify({
             "jenkins_url": JENKINS_URL,
             "port": port,
             "connection_status": status,
-            "num_jobs": num_jobs
+            "num_jobs": num_jobs,
+            "jenkins_jobs": job_names
         })
     except Exception as e:
         logger.error("Failed to get Jenkins node health", error=str(e))

@@ -221,6 +221,7 @@ class DashboardManager {
     
     async refreshData() {
     await this.fetchFailedBuilds();
+    this.updateFailedBuildsBadge();
         try {
             const isManual = !!window._manualRefresh;
             if (isManual) this.showLoading(true);
@@ -302,36 +303,43 @@ class DashboardManager {
     
     updateCharts() {
         this.updateStatusChart();
+        this.updateJobTrendChart();
         this.updateDurationChart();
     }
-    
-    updateStatusChart() {
-        const ctx = document.getElementById('statusChart');
+    updateJobTrendChart() {
+        const ctx = document.getElementById('jobTrendChart');
         if (!ctx) return;
-        
-        // Destroy existing chart if it exists
-        if (this.charts.statusChart) {
-            this.charts.statusChart.destroy();
+
+        // Calculate job stats: % jobs with at least one success, % jobs with at least one failure
+        const totalJobs = this.pipelines.length;
+        let successJobs = 0, failureJobs = 0;
+        this.pipelines.forEach(pipeline => {
+            let hasSuccess = false, hasFailure = false;
+            if (pipeline.info && Array.isArray(pipeline.info.builds)) {
+                pipeline.info.builds.forEach(b => {
+                    if (b.status === 'SUCCESS') hasSuccess = true;
+                    if (b.status === 'FAILURE') hasFailure = true;
+                });
+            }
+            if (hasSuccess) successJobs++;
+            if (hasFailure) failureJobs++;
+        });
+        const successRate = totalJobs > 0 ? (successJobs / totalJobs) * 100 : 0;
+        const failureRate = totalJobs > 0 ? (failureJobs / totalJobs) * 100 : 0;
+
+        // Draw chart
+        if (this.charts.jobTrendChart) {
+            this.charts.jobTrendChart.destroy();
         }
-        
-        const statusCounts = this.calculateStatusCounts();
-        
-        this.charts.statusChart = new Chart(ctx, {
+        this.charts.jobTrendChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Success', 'Failure', 'In Progress', 'Unknown'],
+                labels: ['Success %', 'Failure %'],
                 datasets: [{
-                    data: [
-                        statusCounts.success || 0,
-                        statusCounts.failure || 0,
-                        statusCounts.inProgress || 0,
-                        statusCounts.unknown || 0
-                    ],
+                    data: [successRate, failureRate],
                     backgroundColor: [
                         '#28a745',
-                        '#dc3545',
-                        '#ffc107',
-                        '#6c757d'
+                        '#dc3545'
                     ],
                     borderWidth: 2,
                     borderColor: '#fff'
@@ -349,9 +357,65 @@ class DashboardManager {
                             label: function(context) {
                                 const label = context.label || '';
                                 const value = context.parsed || 0;
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = ((value / total) * 100).toFixed(1);
-                                return `${label}: ${value} (${percentage}%)`;
+                                return `${label}: ${value.toFixed(1)}%`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    updateStatusChart() {
+        const ctx = document.getElementById('statusChart');
+        if (!ctx) return;
+        
+        // Destroy existing chart if it exists
+        if (this.charts.statusChart) {
+            this.charts.statusChart.destroy();
+        }
+        
+        // Calculate total builds, success, and failure from all pipeline builds
+        let successCount = 0, failureCount = 0, totalBuilds = 0;
+        this.pipelines.forEach(pipeline => {
+            if (pipeline.info && Array.isArray(pipeline.info.builds)) {
+                pipeline.info.builds.forEach(b => {
+                    if (b.status === 'SUCCESS') successCount++;
+                    if (b.status === 'FAILURE') failureCount++;
+                    totalBuilds++;
+                });
+            }
+        });
+        const successRate = totalBuilds > 0 ? (successCount / totalBuilds) * 100 : 0;
+        const failureRate = totalBuilds > 0 ? (failureCount / totalBuilds) * 100 : 0;
+
+        this.charts.statusChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Success', 'Failure'],
+                datasets: [{
+                    data: [successRate, failureRate],
+                    backgroundColor: [
+                        '#28a745',
+                        '#dc3545'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                return `${label}: ${value.toFixed(1)}%`;
                             }
                         }
                     }
@@ -417,10 +481,11 @@ class DashboardManager {
         const counts = { success: 0, failure: 0, inProgress: 0, unknown: 0 };
         
         this.pipelines.forEach(pipeline => {
-            const status = pipeline.color || 'unknown';
-            if (status.includes('blue')) counts.success++;
-            else if (status.includes('red')) counts.failure++;
-            else if (status.includes('yellow')) counts.inProgress++;
+            // Prefer status field, fallback to color
+            const status = pipeline.status ? pipeline.status.toUpperCase() : (pipeline.color || '').toLowerCase();
+            if (status === 'SUCCESS' || status.includes('blue')) counts.success++;
+            else if (status === 'FAILURE' || status.includes('red')) counts.failure++;
+            else if (status === 'IN_PROGRESS' || status.includes('yellow')) counts.inProgress++;
             else counts.unknown++;
         });
         
