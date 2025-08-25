@@ -778,14 +778,29 @@ def jenkins_node_health():
     parsed_url = urlparse(JENKINS_URL)
     port = parsed_url.port if parsed_url.port else (443 if parsed_url.scheme == 'https' else 80)
     try:
-        # Check Jenkins connection
+        # Check Jenkins connection and provide detailed diagnostics
+        error_message = None
         try:
             response = jenkins_monitor.session.get(f"{JENKINS_URL}/api/json", timeout=3)
-            status = "up" if response.status_code == 200 else "down"
-            data = response.json() if response.status_code == 200 else {}
-        except Exception:
+            if response.status_code == 200:
+                status = "up"
+                data = response.json()
+            elif response.status_code == 403:
+                status = "down"
+                data = {}
+                error_message = "Authentication failed (403 Forbidden). Check Jenkins credentials."
+            elif response.status_code == 401:
+                status = "down"
+                data = {}
+                error_message = "Unauthorized (401). Check Jenkins username and API token."
+            else:
+                status = "down"
+                data = {}
+                error_message = f"Jenkins returned status code {response.status_code}."
+        except Exception as ex:
             status = "down"
             data = {}
+            error_message = f"Exception: {str(ex)}"
 
         job_names = [job.get('name') for job in data.get('jobs', [])] if data else []
         num_jobs = len(job_names)
@@ -820,7 +835,8 @@ def jenkins_node_health():
             "port": port,
             "connection_status": status,
             "num_jobs": num_jobs,
-            "jenkins_jobs": job_names
+            "jenkins_jobs": job_names,
+            "error_message": error_message
         })
     except Exception as e:
         logger.error("Failed to get Jenkins node health", error=str(e))
