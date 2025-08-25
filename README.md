@@ -40,7 +40,7 @@ Frontend (Node.js + Express + EJS) → Backend (Python Flask) → MongoDB
 ```bash
 # Clone and start all services
 git clone <repository>
-cd Repo-HealthChecker
+cd CI-CD-Jenkins-Pipeline-HealthCheck
 docker-compose up -d
 
 # Access the dashboard
