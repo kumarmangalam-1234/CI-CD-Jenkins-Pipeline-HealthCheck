@@ -4,6 +4,76 @@
  */
 
 class DashboardManager {
+    async fetchJenkinsNodeHealth() {
+        try {
+            const res = await fetch(`${this.backendUrl}/api/jenkins-node-health`);
+            if (res.ok) {
+                const nodeHealth = await res.json();
+                window.jenkinsNodeHealth = nodeHealth;
+                // If using EJS templating, you may need to trigger a re-render or update DOM manually
+                // Only update card after pipelines are refreshed
+                this.latestNodeHealth = nodeHealth;
+                if (this.pipelines) {
+                    this.updateJenkinsNodeHealthCard(nodeHealth);
+                }
+            }
+        } catch (e) {
+            console.error('Failed to fetch Jenkins node health:', e);
+        }
+    }
+
+    updateJenkinsNodeHealthCard(nodeHealth) {
+        // Update status badge
+        const statusContainer = document.querySelector('.card-body .row .col-md-4');
+        if (statusContainer) {
+            const badge = statusContainer.querySelector('.badge');
+            if (badge) {
+                badge.textContent = nodeHealth.connection_status === 'up' ? 'Up & Running' : 'Down';
+                badge.className = nodeHealth.connection_status === 'up' ? 'badge bg-success' : 'badge bg-danger';
+            }
+        }
+        // Update jobs count
+        const jobsBadge = document.querySelector('.card-body .row .col-md-4:nth-child(2) .badge');
+        if (jobsBadge) {
+            jobsBadge.textContent = nodeHealth.num_jobs;
+        }
+        // Update port
+        const portBadge = document.querySelector('.card-body .row .col-md-4:nth-child(3) .badge');
+        if (portBadge) {
+            portBadge.textContent = nodeHealth.port;
+        }
+        // Update Jenkins URL
+        const urlLink = document.querySelector('.card-body a');
+        if (urlLink) {
+            urlLink.href = nodeHealth.jenkins_url;
+            urlLink.textContent = nodeHealth.jenkins_url;
+        }
+        // Update job names list with correct build count
+        const jobList = document.querySelector('.card-body ul.list-group');
+        if (jobList) {
+            jobList.innerHTML = '';
+            if (nodeHealth.jenkins_jobs && nodeHealth.jenkins_jobs.length > 0) {
+                nodeHealth.jenkins_jobs.forEach(job => {
+                    let buildCount = 0;
+                    if (this.pipelines && this.pipelines.length > 0) {
+                        const pipeline = this.pipelines.find(p => p.name === job);
+                        if (pipeline && pipeline.info && pipeline.info.builds) {
+                            buildCount = pipeline.info.builds.length;
+                        }
+                    }
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    li.innerHTML = `<span>${job}</span><span class="badge bg-secondary ms-3">Builds: ${buildCount}</span>`;
+                    jobList.appendChild(li);
+                });
+            } else {
+                const span = document.createElement('span');
+                span.className = 'text-muted';
+                span.textContent = 'No jobs found.';
+                jobList.appendChild(span);
+            }
+        }
+    }
     applyFilters() {
         const name = document.getElementById('filter-name').value.trim().toLowerCase();
         const user = document.getElementById('filter-user').value.trim().toLowerCase();
@@ -145,6 +215,10 @@ class DashboardManager {
         this.refreshInterval = null;
         window.dashboardManager = this;
         this.init();
+        // Auto-refresh Jenkins node health every 30 seconds
+        setInterval(() => {
+            this.fetchJenkinsNodeHealth();
+        }, 30000);
     }
     
     init() {
@@ -270,10 +344,14 @@ class DashboardManager {
     updateDashboard(pipelines, metrics) {
         this.pipelines = pipelines;
         this.overallMetrics = metrics;
-        
+
         this.updateOverviewCards();
         this.updateCharts();
         this.updatePipelinesTable();
+        // Update Jenkins Node Health card with latest build counts
+        if (this.latestNodeHealth) {
+            this.updateJenkinsNodeHealthCard(this.latestNodeHealth);
+        }
     }
     
     updateOverviewCards() {
