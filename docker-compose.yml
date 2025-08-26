@@ -29,7 +29,7 @@ services:
       - MONGODB_URI=mongodb://admin:password123@mongodb:27017/cicd-dashboard?authSource=admin
       - JENKINS_URL=http://host.docker.internal:4000
       - JENKINS_USERNAME=admin
-      - JENKINS_API_TOKEN=11fdc3c82a9ea0a09bd087e3bba5c236cf
+      - JENKINS_API_TOKEN=211fdc3c82a9ea0a09bd087e3bba5c236cfxzy
       - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
       - SMTP_HOST=smtp.gmail.com
       - SMTP_PORT=587
