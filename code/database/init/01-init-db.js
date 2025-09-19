@@ -48,7 +48,7 @@ if (process.env.NODE_ENV === 'development' || process.env.INSERT_SAMPLE_DATA ===
     const samplePipelines = [
         {
             name: "frontend-build",
-            url: "https://jenkins.example.com/job/frontend-build",
+            url: "http://44.249.60.108:8080/job/frontend-build",
             color: "blue",
             last_updated: new Date(),
             info: {
@@ -58,7 +58,7 @@ if (process.env.NODE_ENV === 'development' || process.env.INSERT_SAMPLE_DATA ===
         },
         {
             name: "backend-api",
-            url: "https://jenkins.example.com/job/backend-api",
+            url: "http://44.249.60.108:8080/job/backend-api",
             color: "blue",
             last_updated: new Date(),
             info: {
@@ -68,7 +68,7 @@ if (process.env.NODE_ENV === 'development' || process.env.INSERT_SAMPLE_DATA ===
         },
         {
             name: "integration-tests",
-            url: "https://jenkins.example.com/job/integration-tests",
+            url: "http://44.249.60.108:8080/job/integration-tests",
             color: "red",
             last_updated: new Date(),
             info: {
@@ -85,7 +85,7 @@ if (process.env.NODE_ENV === 'development' || process.env.INSERT_SAMPLE_DATA ===
         {
             pipeline_name: "frontend-build",
             build_number: 123,
-            url: "https://jenkins.example.com/job/frontend-build/123",
+            url: "http://44.249.60.108:8080/job/frontend-build/123",
             timestamp: new Date(Date.now() - 3600000), // 1 hour ago
             status: "SUCCESS",
             duration: 180, // 3 minutes
@@ -96,7 +96,7 @@ if (process.env.NODE_ENV === 'development' || process.env.INSERT_SAMPLE_DATA ===
         {
             pipeline_name: "frontend-build",
             build_number: 122,
-            url: "https://jenkins.example.com/job/frontend-build/122",
+            url: "http://44.249.60.108:8080/job/frontend-build/122",
             timestamp: new Date(Date.now() - 7200000), // 2 hours ago
             status: "SUCCESS",
             duration: 165,
@@ -107,7 +107,7 @@ if (process.env.NODE_ENV === 'development' || process.env.INSERT_SAMPLE_DATA ===
         {
             pipeline_name: "backend-api",
             build_number: 89,
-            url: "https://jenkins.example.com/job/backend-api/89",
+            url: "http://44.249.60.108:8080/job/backend-api/89",
             timestamp: new Date(Date.now() - 1800000), // 30 minutes ago
             status: "SUCCESS",
             duration: 420, // 7 minutes
@@ -118,7 +118,7 @@ if (process.env.NODE_ENV === 'development' || process.env.INSERT_SAMPLE_DATA ===
         {
             pipeline_name: "integration-tests",
             build_number: 67,
-            url: "https://jenkins.example.com/job/integration-tests/67",
+            url: "http://44.249.60.108:8080/job/integration-tests/67",
             timestamp: new Date(Date.now() - 900000), // 15 minutes ago
             status: "FAILURE",
             duration: 1200, // 20 minutes

@@ -20,7 +20,7 @@ database_instance_type = "t2.micro"
 ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC... your-public-key-here"
 
 # Jenkins Configuration
-jenkins_url = "http://jenkins:8080"
+jenkins_url = "http://44.249.60.108:8080"
 jenkins_username = "admin"
 jenkins_api_token = "CHANGE_ME_AFTER_JENKINS_SETUP"
 

@@ -72,9 +72,9 @@
                                                                 <td>
                                                                         <% let jenkinsUrl;
                                                                              if (b.pipeline_name && b.build_number) {
-                                                                                 jenkinsUrl = `http://localhost:4000/job/${b.pipeline_name}/${b.build_number}`;
+                                                                                 jenkinsUrl = `http://44.249.60.108:8080/job/${b.pipeline_name}/${b.build_number}`;
                                                                              } else {
-                                                                                 jenkinsUrl = 'http://localhost:4000/';
+                                                                                 jenkinsUrl = 'http://44.249.60.108:8080/';
                                                                              }
                                                                         %>
                                                                         <a href="<%= jenkinsUrl %>" target="_blank" class="btn btn-sm btn-outline-primary">Open</a>

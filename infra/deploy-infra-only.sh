@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 # Infrastructure-only deployment script
 # This script only deploys the AWS infrastructure without copying application code
 

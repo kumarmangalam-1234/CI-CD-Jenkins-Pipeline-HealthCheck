@@ -42,7 +42,7 @@
 ```json
 {
   "name": "frontend-build",
-  "url": "https://jenkins.example.com/job/frontend-build",
+  "url": "http://44.249.60.108:8080/job/frontend-build",
   "color": "blue",
   "last_updated": "2025-08-22T10:00:00Z",
   "info": {

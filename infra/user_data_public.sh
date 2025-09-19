@@ -98,7 +98,7 @@ services:
     environment:
       - FLASK_ENV=production
       - MONGODB_URI=${MONGODB_URI}
-      - JENKINS_URL=http://jenkins:8080
+      - JENKINS_URL=http://44.249.60.108:8080
       - JENKINS_USERNAME=${JENKINS_USERNAME}
       - JENKINS_API_TOKEN=${JENKINS_API_TOKEN}
       - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}

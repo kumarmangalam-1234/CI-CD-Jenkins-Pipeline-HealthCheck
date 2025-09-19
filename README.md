@@ -78,7 +78,7 @@ npm start
 ### Environment Variables
 ```bash
 # Backend
-JENKINS_URL=https://jenkins_url
+JENKINS_URL=http://44.249.60.108:8080
 JENKINS_USERNAME=you_username
 JENKINS_API_TOKEN=jenkins_api_token
 

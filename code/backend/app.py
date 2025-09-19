@@ -88,7 +88,7 @@ client = MongoClient(MONGODB_URI)
 db = client.get_database()
 
 # Jenkins configuration
-JENKINS_URL = os.environ.get('JENKINS_URL', 'https://jenkins.example.com')
+JENKINS_URL = os.environ.get('JENKINS_URL', 'http://44.249.60.108:8080')
 JENKINS_USERNAME = os.environ.get('JENKINS_USERNAME', 'admin')
 JENKINS_API_TOKEN = os.environ.get('JENKINS_API_TOKEN', 'your-token')
 

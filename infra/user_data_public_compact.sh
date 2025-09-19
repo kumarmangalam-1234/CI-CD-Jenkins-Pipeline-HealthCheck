@@ -27,7 +27,7 @@ cd /opt/${project_name}
 # Create environment file
 cat > .env << EOF
 MONGODB_URI=${MONGODB_URI}
-JENKINS_URL=http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):8080
+JENKINS_URL=http://44.249.60.108:8080
 JENKINS_USERNAME=${jenkins_username}
 JENKINS_API_TOKEN=${jenkins_api_token}
 SMTP_HOST=${smtp_host}
@@ -66,7 +66,7 @@ services:
     environment:
       - FLASK_ENV=production
       - MONGODB_URI=${MONGODB_URI}
-      - JENKINS_URL=http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):8080
+      - JENKINS_URL=http://44.249.60.108:8080
       - JENKINS_USERNAME=${JENKINS_USERNAME}
       - JENKINS_API_TOKEN=${JENKINS_API_TOKEN}
       - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}

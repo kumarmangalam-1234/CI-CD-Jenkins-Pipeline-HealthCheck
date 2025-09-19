@@ -83,7 +83,7 @@ class JenkinsSimulator:
         build_data = {
             "pipeline_name": pipeline_name,
             "build_number": build_number,
-            "url": f"https://jenkins.example.com/job/{pipeline_name}/{build_number}",
+            "url": f"http://44.249.60.108:8080/job/{pipeline_name}/{build_number}",
             "timestamp": timestamp.isoformat(),
             "status": status,
             "duration": duration,
@@ -95,7 +95,7 @@ class JenkinsSimulator:
         # Update pipeline status
         pipeline_update = {
             "name": pipeline_name,
-            "url": f"https://jenkins.example.com/job/{pipeline_name}",
+            "url": f"http://44.249.60.108:8080/job/{pipeline_name}",
             "color": color,
             "last_updated": datetime.now().isoformat(),
             "info": {
@@ -206,7 +206,7 @@ class JenkinsSimulator:
                     build_data = {
                         "pipeline_name": pipeline_name,
                         "build_number": build_number,
-                        "url": f"https://jenkins.example.com/job/{pipeline_name}/{build_number}",
+                        "url": f"http://44.249.60.108:8080/job/{pipeline_name}/{build_number}",
                         "timestamp": build_time.isoformat(),
                         "status": status,
                         "duration": duration,

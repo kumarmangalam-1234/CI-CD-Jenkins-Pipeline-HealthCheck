@@ -27,9 +27,9 @@ services:
     environment:
       - FLASK_ENV=production
       - MONGODB_URI=mongodb://admin:password123@mongodb:27017/cicd-dashboard?authSource=admin
-      - JENKINS_URL=http://host.docker.internal:4000
+      - JENKINS_URL=http://44.249.60.108:8080
       - JENKINS_USERNAME=admin
-      - JENKINS_API_TOKEN=211fdc3c82a9ea0a09bd087e3bba5c236cfxzy
+      - JENKINS_API_TOKEN=11a60590030621e6ceb1ece7d4fa0659e3
       - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
       - SMTP_HOST=smtp.gmail.com
       - SMTP_PORT=587
