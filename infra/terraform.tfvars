@@ -20,7 +20,7 @@ ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDLSZgp/hG9UyZlgrXmBxQMRh
 # Jenkins Configuration
 jenkins_url = "http://44.249.60.108:8080"
 jenkins_username = "admin"
-jenkins_api_token = "11a60590030621e6ceb1ece7d4fa0659e3"
+jenkins_api_token = "xxx"
 
 # Email Configuration
 smtp_host = "smtp.gmail.com"
