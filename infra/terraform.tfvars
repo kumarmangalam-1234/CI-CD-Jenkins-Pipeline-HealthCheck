@@ -20,13 +20,13 @@ ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDLSZgp/hG9UyZlgrXmBxQMRh
 # Jenkins Configuration
 jenkins_url = "http://44.243.240.8:8080"
 jenkins_username = "admin"
-jenkins_api_token = "11d3416a7b1e1ed1387fee23c2ceb754ea"
+jenkins_api_token = "1xxx"
 
 # Email Configuration
 smtp_host = "smtp.gmail.com"
 smtp_port = 587
 smtp_username = "kumarmanglammishra@gmail.com"
-smtp_password = "bsekbmlkhkrgbjnj"
+smtp_password = "xxx"
 
 # Slack Configuration (Optional)
 slack_webhook_url = ""
